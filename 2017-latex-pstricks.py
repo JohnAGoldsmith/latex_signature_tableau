@@ -48,21 +48,20 @@ def makesigbox(x,y,width,height,sig):
 
 
     return outlist
-def print_list_of_signatures(y,sig_list):
+def print_list_of_signatures(outfile, y,sig_list, hardrightmargin):
     #boxheight= 2
     output_list = list()
     currentx= 0
     currenty = y
-    hardrightmargin = 22
     for signo in range(len(sig_list)):
-        sig = sig_list[signo]
+        sig = sig_list.pop(0)
         boxwidth = orthographicsiglength(sig.affixlist)
         printlist = makesigbox(currentx,currenty,boxwidth-xmargin,boxheight,sig)
-        output_list.extend(printlist)
+        for line in printlist:
+            print >>outfile, line
         currentx += boxwidth
-	if currentx > hardrightmargin:
-		break
-    return output_list
+        if currentx > hardrightmargin:
+		    break
 
 def makepspicture_start(x,y,width,height):
     outlist = list()
@@ -178,21 +177,21 @@ else:
 
 #bullet = """\\newcommand\cb{\makebox(0,0){$\\bullet$}}\n"""
 header1 = """\\begin{centering}"""  
-header2 = "\\begin{picture}(" 
+#header2 = "\\begin{pspicture}"
  
-footer1 = "\\end{picture}\n"
+footer1 = "\\end{pspicture}\n"
 footer2 = "\\end{centering}\n"
 footer3 = "\\end{document}\n"
 
 sizex= 25
-sizey = 20
+sizey = 15
 boxwidth = 2
 boxheight= 2
-xmargin = .2
+xmargin  = .2
 
 currentx=0
 currenty=0
-
+hardrightmargin = 22
 
 readfile()
  
@@ -213,24 +212,29 @@ for sig in list_of_sigs:
     map_of_signatures_by_length[siglength].append(sig)
 
 # Now we print each list of signatures
-for length in range(1,10):
-    if length in map_of_signatures_by_length:
-        templist = list()
-        for sig in map_of_signatures_by_length[length]:
-            print 196 ,sig.affixlist
-            templist.append(sig)
-            print 202, len(templist), sig.affixlist
-        lines = print_list_of_signatures(boxheight * length-4,templist)
-        print 203, lines
-        for i in range(0,len(lines)):
-            print 205, lines[i]
-            print >>outfile,  lines[i]
+# we will break this up into separate pages, though
+Maximum_signature_length = 10
 
+while (True):
+    Finished_flag = True
+   
+    for length in range(1,Maximum_signature_length):
+        if length in map_of_signatures_by_length:
+            lines = print_list_of_signatures(outfile, boxheight * length-4,map_of_signatures_by_length[length], hardrightmargin)
+            if len(map_of_signatures_by_length[length]) > 0:
+                Finished_flag = False
+    print >>outfile, footer1
+    if Finished_flag == True:
+            break
+    else:
+        print >>outfile, "\n\\newpage"
+        print >>outfile, "\\begin{pspicture}(10,15)"
+
+  
 
 lines = makepspicture_end()
 for line in lines:
     print >>outfile,  line
-    print 197, line
 
 
 print >>outfile, footer3
